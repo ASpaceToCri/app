@@ -1,10 +1,32 @@
 import React, { useEffect, useState } from "react";
+import { initMap } from "./api/map"; // Import your map initializer
 
 const Index = () => {
   const [message, setMessage] = useState("Loading");
   const [activeItem, setActiveItem] = useState("home");
 
   useEffect(() => {
+    // Dynamically load Google Maps script
+    const loadGoogleMapsScript = () => {
+      if (window.google && window.google.maps) {
+        // Initialize map once the script is loaded
+        initMap();
+      } else {
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAHP4EymGHsVNUoPLfgwyx0gnlM9OujR8k&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          if (window.google && window.google.maps) {
+            initMap();
+          }
+        };
+        document.head.appendChild(script);
+      }
+    };
+
+    loadGoogleMapsScript();
+
     fetch("http://localhost:8080/api/home")
       .then((response) => {
         if (!response.ok) {
@@ -47,7 +69,10 @@ const Index = () => {
           ))}
         </nav>
       </div>
-      <div className="flex-1 p-8">{message}</div>
+      <div className="flex-1 p-8">
+        <div id="map" style={{ height: "500px", width: "100%" }}></div>
+        {message}
+      </div>
     </div>
   );
 };
