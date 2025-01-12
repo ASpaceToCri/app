@@ -1,5 +1,67 @@
 import React, { useState, useEffect } from "react";
-import { initMap } from "./api/map"; // Import your map initializer
+import { initMap } from "./api/map";
+import { Calendar, momentLocalizer,} from "react-big-calendar";
+import moment from "moment";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+
+
+// Localizer for react-big-calendar
+const localizer = momentLocalizer(moment);
+
+const CustomToolbar = ({ currentView, onNavigate, onView }) => {
+  return (
+    <div className="flex justify-between items-center mb-4">
+      <div>
+        <button
+          onClick={() => onNavigate("PREV")}
+          className="p-2 bg-gray-300 rounded mr-2"
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => onNavigate("TODAY")}
+          className="p-2 bg-gray-300 rounded mr-2"
+        >
+          Today
+        </button>
+        <button
+          onClick={() => onNavigate("NEXT")}
+          className="p-2 bg-gray-300 rounded"
+        >
+          Next
+        </button>
+      </div>
+      <div>
+        <button
+          onClick={() => onView("month")}
+          className={`p-2 rounded mr-2 ${
+            currentView === "month" ? "bg-blue-500 text-white" : "bg-gray-300"
+          }`}
+        >
+          Month
+        </button>
+        <button
+          onClick={() => onView("week")}
+          className={`p-2 rounded mr-2 ${
+            currentView === "week" ? "bg-blue-500 text-white" : "bg-gray-300"
+          }`}
+        >
+          Week
+        </button>
+        <button
+          onClick={() => onView("day")}
+          className={`p-2 rounded ${
+            currentView === "day" ? "bg-blue-500 text-white" : "bg-gray-300"
+          }`}
+        >
+          Day
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 
 const MenuIcon = () => (
   <svg
@@ -37,15 +99,48 @@ const CloseIcon = () => (
 );
 
 const Index = () => {
-  const [message, setMessage] = useState("Loading");
+  const [message, setMessage] = useState("Loading...");
   const [activeItem, setActiveItem] = useState("home");
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [currentView, setCurrentView] = useState("month");
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const handleNavigate = (action) => {
+    let newDate = new Date(currentDate);
+
+    switch (action) {
+      case "PREV":
+        newDate =
+          currentView === "month"
+            ? moment(currentDate).subtract(1, "months").toDate()
+            : currentView === "week"
+            ? moment(currentDate).subtract(1, "weeks").toDate()
+            : moment(currentDate).subtract(1, "days").toDate();
+        break;
+      case "NEXT":
+        newDate =
+          currentView === "month"
+            ? moment(currentDate).add(1, "months").toDate()
+            : currentView === "week"
+            ? moment(currentDate).add(1, "weeks").toDate()
+            : moment(currentDate).add(1, "days").toDate();
+        break;
+      case "TODAY":
+        newDate = new Date();
+        break;
+      default:
+        break;
+    }
+    setCurrentDate(newDate);
+  };
+
+  const handleViewChange = (view) => {
+    setCurrentView(view);
+  };
 
   useEffect(() => {
-    // Dynamically load Google Maps script
     const loadGoogleMapsScript = () => {
       if (window.google && window.google.maps) {
-        // Initialize map once the script is loaded
         initMap();
       } else {
         const script = document.createElement("script");
@@ -70,13 +165,22 @@ const Index = () => {
         }
         return response.json();
       })
-      .then((data) => {
-        setMessage(data.message);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
+      .then((data) => setMessage(data.message))
+      .catch((error) => console.error("Error fetching data:", error));
   }, []);
+
+  const events = [
+    {
+      title: "Meeting",
+      start: new Date(2025, 0, 15, 10, 0),
+      end: new Date(2025, 0, 15, 12, 0),
+    },
+    {
+      title: "Lunch Break",
+      start: new Date(2025, 0, 16, 13, 0),
+      end: new Date(2025, 0, 16, 14, 0),
+    },
+  ];
 
   const menuItems = [
     { id: "home", label: "🏠 Home" },
@@ -87,7 +191,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Top Navigation Bar - Always visible */}
+      {/* Top Navigation Bar */}
       <nav className="bg-gray-800 text-white fixed w-full z-10">
         <div className="flex items-center px-4 py-3">
           <button
@@ -103,7 +207,7 @@ const Index = () => {
 
       <div className="flex pt-14">
         {/* Sidebar */}
-        <div
+        <aside
           className={`fixed inset-y-0 left-0 transform ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           } bg-gray-800 text-white w-64 transition-transform duration-300 ease-in-out z-20 mt-14`}
@@ -124,27 +228,41 @@ const Index = () => {
               </button>
             ))}
           </nav>
-        </div>
+        </aside>
 
         {/* Main Content */}
-        <div className="flex-1">
-          {/* Overlay */}
-          {isSidebarOpen && (
-            <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-10 mt-14"
-              onClick={() => setSidebarOpen(false)}
+        <main className="flex-1 flex">
+          <section className="w-1/4 p-4">
+            <CustomToolbar
+              onNavigate={handleNavigate}
+              onView={handleViewChange}
+              currentView={currentView}
+              currentDate={currentDate}
             />
-          )}
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              date={currentDate}
+              view={currentView}
+              onNavigate={(date) => setCurrentDate(date)}
+              onView={handleViewChange}
+              style={{ height: "500px", width: "100%" }}
+              className="shadow-lg rounded-lg bg-white p-4"
+              toolbar={false}
+        />
+          </section>
 
-          <main className="p-4">
+          <section className="w-3/4 p-4">
             <div
               id="map"
-              style={{ height: "500px", width: "100%" }}
+              style={{ height: "1000px", width: "150%" }}
               className="rounded-lg shadow-lg mb-4"
             ></div>
             <div className="bg-white p-4 rounded-lg shadow">{message}</div>
-          </main>
-        </div>
+          </section>
+        </main>
       </div>
     </div>
   );
