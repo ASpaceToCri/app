@@ -144,7 +144,7 @@ const Index = () => {
         initMap();
       } else {
         const script = document.createElement("script");
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&callback=initMap`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAP_API_KEY}&callback=initMap`;
         script.async = true;
         script.defer = true;
         script.onload = () => {
@@ -158,15 +158,15 @@ const Index = () => {
 
     loadGoogleMapsScript();
 
-    fetch("http://localhost:8080/api/home")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => setMessage(data.message))
-      .catch((error) => console.error("Error fetching data:", error));
+    // fetch("http://localhost:8080/api/home")
+    //   .then((response) => {
+    //     if (!response.ok) {
+    //       throw new Error(`HTTP error! status: ${response.status}`);
+    //     }
+    //     return response.json();
+    //   })
+    //   .then((data) => setMessage(data.message))
+    //   .catch((error) => console.error("Error fetching data:", error));
   }, []);
 
   const events = [
