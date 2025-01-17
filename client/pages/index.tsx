@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { initMap } from "./api/map";
-import { Calendar, momentLocalizer,} from "react-big-calendar";
+import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
+// Types
+type CalendarView = "month" | "week" | "day";
 
 // Localizer for react-big-calendar
 const localizer = momentLocalizer(moment);
 
-const CustomToolbar = ({ currentView, onNavigate, onView }) => {
+// Props for CustomToolbar
+interface CustomToolbarProps {
+  currentView: CalendarView;
+  onNavigate: (action: "PREV" | "TODAY" | "NEXT") => void;
+  onView: (view: CalendarView) => void;
+}
+
+// CustomToolbar Component
+const CustomToolbar: React.FC<CustomToolbarProps> = ({
+  currentView,
+  onNavigate,
+  onView,
+}) => {
   return (
     <div className="flex justify-between items-center mb-4">
       <div>
@@ -34,6 +48,7 @@ const CustomToolbar = ({ currentView, onNavigate, onView }) => {
       <div>
         <button
           onClick={() => onView("month")}
+          aria-pressed={currentView === "month"}
           className={`p-2 rounded mr-2 ${
             currentView === "month" ? "bg-blue-500 text-white" : "bg-gray-300"
           }`}
@@ -42,6 +57,7 @@ const CustomToolbar = ({ currentView, onNavigate, onView }) => {
         </button>
         <button
           onClick={() => onView("week")}
+          aria-pressed={currentView === "week"}
           className={`p-2 rounded mr-2 ${
             currentView === "week" ? "bg-blue-500 text-white" : "bg-gray-300"
           }`}
@@ -50,6 +66,7 @@ const CustomToolbar = ({ currentView, onNavigate, onView }) => {
         </button>
         <button
           onClick={() => onView("day")}
+          aria-pressed={currentView === "day"}
           className={`p-2 rounded ${
             currentView === "day" ? "bg-blue-500 text-white" : "bg-gray-300"
           }`}
@@ -59,10 +76,9 @@ const CustomToolbar = ({ currentView, onNavigate, onView }) => {
       </div>
     </div>
   );
-}
+};
 
-
-
+// Menu and Close Icon Components
 const MenuIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -102,40 +118,24 @@ const Index = () => {
   const [message, setMessage] = useState("Loading...");
   const [activeItem, setActiveItem] = useState("home");
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const [currentView, setCurrentView] = useState("month");
+  const [currentView, setCurrentView] = useState<CalendarView>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  const handleNavigate = (action) => {
-    let newDate = new Date(currentDate);
+  const handleNavigate = (action: "PREV" | "TODAY" | "NEXT") => {
+    const offsetMap: Record<CalendarView, moment.DurationInputArg2> = {
+      month: "months",
+      week: "weeks",
+      day: "days",
+    };
 
-    switch (action) {
-      case "PREV":
-        newDate =
-          currentView === "month"
-            ? moment(currentDate).subtract(1, "months").toDate()
-            : currentView === "week"
-            ? moment(currentDate).subtract(1, "weeks").toDate()
-            : moment(currentDate).subtract(1, "days").toDate();
-        break;
-      case "NEXT":
-        newDate =
-          currentView === "month"
-            ? moment(currentDate).add(1, "months").toDate()
-            : currentView === "week"
-            ? moment(currentDate).add(1, "weeks").toDate()
-            : moment(currentDate).add(1, "days").toDate();
-        break;
-      case "TODAY":
-        newDate = new Date();
-        break;
-      default:
-        break;
+    if (action === "TODAY") {
+      setCurrentDate(new Date());
+    } else {
+      const offset = action === "PREV" ? -1 : 1;
+      setCurrentDate(
+        moment(currentDate).add(offset, offsetMap[currentView]).toDate()
+      );
     }
-    setCurrentDate(newDate);
-  };
-
-  const handleViewChange = (view) => {
-    setCurrentView(view);
   };
 
   useEffect(() => {
@@ -144,7 +144,7 @@ const Index = () => {
         initMap();
       } else {
         const script = document.createElement("script");
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAHP4EymGHsVNUoPLfgwyx0gnlM9OujR8k&callback=initMap`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAP_API_KEY}&callback=initMap`;
         script.async = true;
         script.defer = true;
         script.onload = () => {
@@ -191,11 +191,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Top Navigation Bar */}
       <nav className="bg-gray-800 text-white fixed w-full z-10">
         <div className="flex items-center px-4 py-3">
           <button
             onClick={() => setSidebarOpen(!isSidebarOpen)}
+            aria-expanded={isSidebarOpen}
             className="p-2 rounded-lg hover:bg-gray-700 transition-colors mr-4"
             aria-label="Toggle menu"
           >
@@ -206,7 +206,6 @@ const Index = () => {
       </nav>
 
       <div className="flex pt-14">
-        {/* Sidebar */}
         <aside
           className={`fixed inset-y-0 left-0 transform ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -230,14 +229,12 @@ const Index = () => {
           </nav>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 flex">
           <section className="w-1/4 p-4">
             <CustomToolbar
               onNavigate={handleNavigate}
-              onView={handleViewChange}
+              onView={(view: CalendarView) => setCurrentView(view)}
               currentView={currentView}
-              currentDate={currentDate}
             />
             <Calendar
               localizer={localizer}
@@ -247,11 +244,15 @@ const Index = () => {
               date={currentDate}
               view={currentView}
               onNavigate={(date) => setCurrentDate(date)}
-              onView={handleViewChange}
+              onView={(view) => {
+                if (view === "month" || view === "week" || view === "day") {
+                  setCurrentView(view);
+                }
+              }}
               style={{ height: "500px", width: "100%" }}
               className="shadow-lg rounded-lg bg-white p-4"
               toolbar={false}
-        />
+            />
           </section>
 
           <section className="w-3/4 p-4">
