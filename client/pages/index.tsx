@@ -3,7 +3,7 @@ import { initMap } from "./api/map";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-
+import Link from "next/link";
 // Types
 type CalendarView = "month" | "week" | "day";
 
@@ -120,6 +120,12 @@ const Index = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<CalendarView>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+
+  const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
+    setSelectedDate(slotInfo.start); // Highlight the selected start date
+  };
 
   const handleNavigate = (action: "PREV" | "TODAY" | "NEXT") => {
     const offsetMap: Record<CalendarView, moment.DurationInputArg2> = {
@@ -169,25 +175,14 @@ const Index = () => {
     //   .catch((error) => console.error("Error fetching data:", error));
   }, []);
 
-  const events = [
-    {
-      title: "Meeting",
-      start: new Date(2025, 0, 15, 10, 0),
-      end: new Date(2025, 0, 15, 12, 0),
-    },
-    {
-      title: "Lunch Break",
-      start: new Date(2025, 0, 16, 13, 0),
-      end: new Date(2025, 0, 16, 14, 0),
-    },
-  ];
 
   const menuItems = [
-    { id: "home", label: "🏠 Home" },
-    { id: "analytics", label: "📊 Analytics" },
-    { id: "profile", label: "👤 Profile" },
-    { id: "settings", label: "⚙️ Settings" },
+    { id: "home", label: "🏠 Home", href: "/" },
+    { id: "analytics", label: "📊 Analytics", href: "/analytics" },
+    { id: "profile", label: "👤 Profile", href: "/ProfilePage" },  // Ensure the route is correct
+    { id: "settings", label: "⚙️ Settings", href: "/settings" },  // Ensure the route is correct
   ];
+  
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -213,8 +208,8 @@ const Index = () => {
         >
           <nav className="p-4">
             {menuItems.map((item) => (
+              <Link key={item.id} href={item.href}>
               <button
-                key={item.id}
                 onClick={() => {
                   setActiveItem(item.id);
                   setSidebarOpen(false);
@@ -225,34 +220,62 @@ const Index = () => {
               >
                 <span>{item.label}</span>
               </button>
+            </Link>
             ))}
           </nav>
         </aside>
 
         <main className="flex-1 flex">
-          <section className="w-1/4 p-4">
+          <section className="w-1/6 p-4">
             <CustomToolbar
               onNavigate={handleNavigate}
               onView={(view: CalendarView) => setCurrentView(view)}
               currentView={currentView}
+              
             />
             <Calendar
               localizer={localizer}
-              events={events}
               startAccessor="start"
               endAccessor="end"
               date={currentDate}
               view={currentView}
+              selectable
+              onSelectSlot={handleSelectSlot}
+
               onNavigate={(date) => setCurrentDate(date)}
               onView={(view) => {
                 if (view === "month" || view === "week" || view === "day") {
                   setCurrentView(view);
                 }
               }}
-              style={{ height: "500px", width: "100%" }}
-              className="shadow-lg rounded-lg bg-white p-4"
+              
+              style=
+              {{ 
+                height: "35vh", 
+                width: "100%" ,
+                maxWidth:"100%"
+              }}
+              className="shadow-lg rounded-lg bg-white p-4 h-full w-full"
               toolbar={false}
+              dayPropGetter={(date) => {
+                const isSelected =
+                  selectedDate && moment(date).isSame(selectedDate, "day");
+                return {
+                  style: {
+                    borderLeft: isSelected ? "2px solid #007bff" : "",
+                    borderTop: isSelected ? "2px solid #007bff" : "",
+                    borderRight: isSelected ? "2px solid #007bff" : "",
+                    borderBottom: isSelected ? "2px solid #007bff" : "",
+                    
+                  },
+                  className: isSelected ? "bg-blue-100 border-blue-400 border-2 " : "",
+                  
+                };
+              }}
+              
+              
             />
+            
           </section>
 
           <section className="w-3/4 p-4">
@@ -268,5 +291,7 @@ const Index = () => {
     </div>
   );
 };
+
+
 
 export default Index;
