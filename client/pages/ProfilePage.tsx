@@ -17,14 +17,14 @@ interface ProfileData {
 }
 
 // Simple Card components to replace shadcn/ui
-const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({
+export const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
   className = "",
 }) => (
   <div className={`bg-white rounded-lg shadow-md ${className}`}>{children}</div>
 );
 
-const CardContent: React.FC<{
+export const CardContent: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = "" }) => (

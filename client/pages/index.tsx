@@ -79,7 +79,7 @@ const CustomToolbar: React.FC<CustomToolbarProps> = ({
 };
 
 // Menu and Close Icon Components
-const MenuIcon = () => (
+export const MenuIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -178,9 +178,9 @@ const Index = () => {
 
   const menuItems = [
     { id: "home", label: "🏠 Home", href: "/" },
-    { id: "analytics", label: "📊 Analytics", href: "/analytics" },
+    { id: "analytics", label: "📊 Analytics", href: "/Analytics" },
     { id: "profile", label: "👤 Profile", href: "/ProfilePage" },  // Ensure the route is correct
-    { id: "settings", label: "⚙️ Settings", href: "/settings" },  // Ensure the route is correct
+    { id: "settings", label: "⚙️ Settings", href: "/Settings" },  // Ensure the route is correct
   ];
   
 
