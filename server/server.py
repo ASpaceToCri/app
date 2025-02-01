@@ -9,8 +9,8 @@ CORS(app)
 
 def return_home():
     return jsonify({
-        'message': "Hello World!"
+        'message': "Did you log your sadness yet?"
     })
 
 if __name__ == "__main__":
-    app.run(debug=True, port = 8080)
+    app.run(port = 8080, debug=True)
